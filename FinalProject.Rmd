@@ -1,0 +1,116 @@
+---
+title: "Final Project STAT184"
+author: "Milo Schmitt, Matt Viana"
+date: "2023-12-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r loadPackages}
+#Load packages with groundhog
+library(groundhog)
+pkgs <- c("ggplot2", "dplyr", "janitor", "kableExtra", "knitr", "tidyr")
+
+groundhog.library(pkgs, '2023-12-01')
+```
+
+```{r}
+
+# reading tables and filtering to relevant data
+
+league_EUW <- read.table(
+  file = '~/Downloads/games.csv',
+  header = TRUE,
+  sep = ','
+)
+
+league_BR <- read.table(
+  file = '~/Downloads/full_data_100.csv',
+  header = TRUE,
+  sep = ','
+)
+
+league_BR <- league_BR[, c("blueWin", "blueFirstBlood", "blueDragonKill", "redDragonKill", "blueRiftHeraldKill", "redRiftHeraldKill", "blueBaronKill", "redBaronKill")]
+
+league_EUW <- league_EUW[, c("winner", "firstBlood", "t1_dragonKills", "t2_dragonKills", "t1_riftHeraldKills", "t2_riftHeraldKills", "t1_baronKills", "t2_baronKills")]
+
+
+league_EUW
+league_BR
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r first blood plots}
+
+league_EUW <- league_EUW %>%
+  filter(firstBlood != 0)
+
+# calculate winrates
+summary_fb_EUW <- league_EUW %>%
+  group_by(firstBlood, winner) %>%
+  summarise(count = n()) %>%
+  mutate(winrate = count / sum(count) * 100)
+
+# plot the data as a histogram
+ggplot(summary_fb_EUW, aes(x = factor(firstBlood), y = winrate, fill = factor(winner))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = c("#3498db", "#e74c3c"), name = "Winner") +
+  labs(title = "Win Rates based on First Blood (EUW)",
+       x = "First Blood",
+       y = "Win Rate (%)") +
+  scale_x_discrete(labels = c("Blue Side", "Red Side")) +
+  theme_minimal()
+
+```
+```{r drake plots}
+
+
+combined_dragons_EUW <- league_EUW %>%
+  select(winner, t1_dragonKills, t2_dragonKills) %>%
+  gather(key = "side", value = "dragonKills", -winner) %>%
+  mutate(side = ifelse(side == "t1_dragonKills", 1, 2))
+
+# calculating winrates 
+dragon_wr_EUW <- combined_dragons_EUW %>%
+  group_by(dragonKills, winner, side) %>%
+  summarise(count = n()) %>%
+  group_by(dragonKills, side) %>%
+  mutate(win_rate = ifelse(winner == side, count / sum(count) * 100, 0))
+
+# Create a histogram
+ggplot(dragon_wr_EUW, aes(x = dragonKills, y = win_rate, fill = factor(winner))) +
+  geom_bar(stat = "identity", position = "dodge", color = "white") +
+  scale_fill_manual(values = c("#3498db", "#e74c3c"), name = "Winner") +
+  labs(title = "Win Rates based on Number of Drake Kills",
+       x = "Number of Drake Kills",
+       y = "Win Rate (%)") +
+  facet_wrap(~side, scales = "free_y", labeller = labeller(side = c("1" = "Blue Side", "2" = "Red Side"))) +
+  theme_minimal()
+
+```
+
+
+```{r avg objective plots}
+
+avg_dragon_kills_EUW <- c(mean(league_EUW$t1_dragonKills), mean(league_EUW$t2_dragonKills))
+
+avg_dkills_EUW_data <- data.frame(
+  Team = c("Blue Team", "Red Team"),
+  AvgDragonKills = avg_dragon_kills_EUW
+)
+
+ggplot(avg_dkills_EUW_data, aes(x = Team, y = AvgDragonKills, fill = Team)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Team", y = "Dragon Kills", title = "Average Dragon Kills Per Game") +
+  scale_fill_manual(values = c("#3498db", "#e74c3c"), name = "Winner") +
+  theme_minimal()
+
+```
+
+
