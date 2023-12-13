@@ -32,7 +32,7 @@ league_BR <- read.table(
   header = TRUE,
   sep = ','
 )
-
+# limit to only the necessary data, which is statistics which are shared between data frames (ex. both data frames have a column to show which team got first blood)
 league_BR <- league_BR[, c("blueWin", "blueFirstBlood", "blueDragonKill", "redDragonKill", "blueRiftHeraldKill", "redRiftHeraldKill", "blueBaronKill", "redBaronKill")]
 
 league_EUW <- league_EUW[, c("winner", "firstBlood", "t1_dragonKills", "t2_dragonKills", "t1_riftHeraldKills", "t2_riftHeraldKills", "t1_baronKills", "t2_baronKills")]
@@ -46,7 +46,7 @@ league_BR
 
 You can also embed plots, for example:
 
-```{r first blood plots}
+```{r first blood plots euw}
 
 league_EUW <- league_EUW %>%
   filter(firstBlood != 0)
@@ -58,18 +58,45 @@ summary_fb_EUW <- league_EUW %>%
   mutate(winrate = count / sum(count) * 100)
 
 # plot the data as a histogram
-ggplot(summary_fb_EUW, aes(x = factor(firstBlood), y = winrate, fill = factor(winner))) +
+ggplot(summary_fb_EUW, 
+       aes(x = factor(firstBlood), 
+           y = winrate, fill = factor(winner))) +
   geom_bar(stat = "identity", position = "dodge") +
   scale_fill_manual(values = c("#3498db", "#e74c3c"), name = "Winner") +
   labs(title = "Win Rates based on First Blood (EUW)",
        x = "First Blood",
        y = "Win Rate (%)") +
   scale_x_discrete(labels = c("Blue Side", "Red Side")) +
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.text = element_blank())
+```
+
+``` {r first blood plots brazil}
+league_BR <- league_BR %>%
+  filter(blueFirstBlood != 0)
+
+# calculate winrates
+summary_fb_BR <- league_BR %>%
+  group_by(blueFirstBlood, blueWin) %>%
+  summarise(count = n()) %>%
+  mutate(winrate = count / sum(count) * 100)
+
+# plot the data as a histogram
+ggplot(summary_fb_BR, 
+       aes(x = factor(blueFirstBlood), 
+           y = winrate, 
+           fill = factor(blueWin))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = c("#3498db", "#e74c3c"), name = "Winner") +
+  labs(title = "Win Rates based on First Blood (Brazil)",
+       x = "First Blood",
+       y = "Win Rate (%)") +
+  scale_x_discrete(labels = c("Blue Side", "Red Side")) +
+  theme_minimal() +
+  theme(legend.text = element_blank())
 
 ```
-```{r drake plots}
-
+```{r drake plots euw}
 
 combined_dragons_EUW <- league_EUW %>%
   select(winner, t1_dragonKills, t2_dragonKills) %>%
@@ -83,34 +110,119 @@ dragon_wr_EUW <- combined_dragons_EUW %>%
   group_by(dragonKills, side) %>%
   mutate(win_rate = ifelse(winner == side, count / sum(count) * 100, 0))
 
-# Create a histogram
-ggplot(dragon_wr_EUW, aes(x = dragonKills, y = win_rate, fill = factor(winner))) +
+# create a histogram
+ggplot(dragon_wr_EUW, 
+       aes(x = dragonKills, 
+           y = win_rate, 
+           fill = factor(winner))) +
   geom_bar(stat = "identity", position = "dodge", color = "white") +
   scale_fill_manual(values = c("#3498db", "#e74c3c"), name = "Winner") +
   labs(title = "Win Rates based on Number of Drake Kills",
        x = "Number of Drake Kills",
        y = "Win Rate (%)") +
   facet_wrap(~side, scales = "free_y", labeller = labeller(side = c("1" = "Blue Side", "2" = "Red Side"))) +
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# don't know how to manually edit the text of a legend, which would show '1' or '2' so I removed the legend
+# the data is pretty self-explanatory in this case anyways, especially when each graph is already labelled blue or red side
 
 ```
 
 
-```{r avg objective plots}
+```{r drake plots brazil}
+combined_dragons_BR <- league_BR %>%
+  select(blueWin, blueDragonKill, redDragonKill) %>%
+  gather(key = "side", value = "dragonKills", -blueWin) %>%
+  mutate(side = ifelse(side == "blueDragonKill", TRUE, FALSE))
 
+# since the data is now true or false instead of 1 or 2, they can be turned logical to make future wrangling easier
+combined_dragons_BR$blueWin <- as.logical(combined_dragons_BR$blueWin)
+
+# calculating winrates
+dragon_wr_BR <- combined_dragons_BR %>%
+  group_by(dragonKills, blueWin, side) %>%
+  summarise(count = n()) %>%
+  group_by(dragonKills, side) %>%
+  mutate(win_rate = ifelse(blueWin == side, count / sum(count) * 100, 0))
+
+# create histogram
+ggplot(dragon_wr_BR, 
+       aes(x = dragonKills, 
+           y = win_rate, 
+           fill = factor(blueWin))) +
+  geom_bar(stat = "identity", position = "dodge", color = "white") +
+  scale_fill_manual(values = c("#3498db", "#e74c3c"), name = "Winner") +
+  labs(title = "Win Rates based on Number of Drake Kills (Brazil)",
+       x = "Number of Drake Kills",
+       y = "Win Rate (%)") +
+  facet_wrap(~side, scales = "free", labeller = labeller(side = c("FALSE" = "Blue Side", "TRUE" = "Red Side"))) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+# the same was done here, legend is gone because it only shows "TRUE" or "FALSE", which is unnecessary
+```
+
+```{r avg objective plots euw}
+
+# avg objective kill calculations
 avg_dragon_kills_EUW <- c(mean(league_EUW$t1_dragonKills), mean(league_EUW$t2_dragonKills))
+avg_rift_herald_kills_EUW <- c(mean(league_EUW$t1_riftHeraldKills), mean(league_EUW$t2_riftHeraldKills))
+avg_baron_kills_EUW <- c(mean(league_EUW$t1_baronKills), mean(league_EUW$t2_baronKills))
 
-avg_dkills_EUW_data <- data.frame(
-  Team = c("Blue Team", "Red Team"),
-  AvgDragonKills = avg_dragon_kills_EUW
+# new data frame with 6 rows
+avg_kills_EUW_data <- data.frame(
+  Team = rep(c("Blue Team", "Red Team"), each = 3),
+  Category = rep(c("Dragon Kills", "Rift Herald Kills", "Baron Kills"), times = 2),
+  AvgKills = c(avg_dragon_kills_EUW[1], avg_rift_herald_kills_EUW[1], avg_baron_kills_EUW[1],
+              avg_dragon_kills_EUW[2], avg_rift_herald_kills_EUW[2], avg_baron_kills_EUW[2])
 )
 
-ggplot(avg_dkills_EUW_data, aes(x = Team, y = AvgDragonKills, fill = Team)) +
+# plot this new data frame as histogram
+ggplot(avg_kills_EUW_data, aes(x = Team, y = AvgKills, fill = Category)) +
   geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Team", y = "Dragon Kills", title = "Average Dragon Kills Per Game") +
-  scale_fill_manual(values = c("#3498db", "#e74c3c"), name = "Winner") +
+  labs(x = "Team", y = "Average Kills", title = "Average Kills Per Game by Objective") +
+  scale_fill_manual(values = c("#3498db", "#e74c3c", "#2ecc71"), name = "Objective") +
   theme_minimal()
+
+```
+```{r avg objective plots brazil}
+
+avg_dragon_kills_BR <- c(mean(league_BR$blueDragonKill), mean(league_BR$redDragonKill))
+avg_rift_herald_kills_BR <- c(mean(league_BR$blueRiftHeraldKill), mean(league_BR$redRiftHeraldKill))
+avg_baron_kills_BR <- c(mean(league_BR$blueBaronKill), mean(league_BR$redBaronKill))
+
+# new data frame
+avg_kills_BR_data <- data.frame(
+  Team = rep(c("Blue Side", "Red Side"), each = 3),
+  Category = rep(c("Dragon", "Rift Herald", "Baron"), times = 2),
+  AvgKills = c(avg_dragon_kills_BR[1], avg_rift_herald_kills_BR[1], avg_baron_kills_BR[1],
+               avg_dragon_kills_BR[2], avg_rift_herald_kills_BR[2], avg_baron_kills_BR[2])
+)
+
+# plotting
+ggplot(avg_kills_BR_data, aes(x = Team, y = AvgKills, fill = Category)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Team", y = "Average Kills", title = "Average Kills Per Game by Objective (Brazil)") +
+  scale_fill_manual(values = c("#3498db", "#e74c3c", "#2ecc71"), name = "Objective") +
+  theme_minimal()
+
 
 ```
 
 
+``` {r dragon kills vs baron kills euw}
+# add all dragon kills and all baron kills, plot the avg per game against each other
+ggplot(league_EUW, aes(x = t1_dragonKills + t2_dragonKills, y = t1_baronKills + t2_baronKills)) +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(x = "Dragon Kills", y = "Baron Kills", title = "Dragon Kills vs Baron Kills (EUW)") +
+  theme_minimal()
+```
+
+```{r dragon kills vs baron kills brazil}
+# same for br data
+ggplot(league_BR, aes(x = blueDragonKill + redDragonKill, y = blueBaronKill + redBaronKill)) +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(x = "Dragon Kills", y = "Baron Kills", title = "Dragon Kills vs Baron Kills (Brazil)") +
+  theme_minimal()
+```
