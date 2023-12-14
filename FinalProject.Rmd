@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r loadPackages, include=FALSE}
+# style choice: snake case
 #Load packages with groundhog
 library(groundhog)
 library(gridExtra)
