@@ -28,13 +28,13 @@ groundhog.library(pkgs, '2023-12-01')
 # reading tables and filtering to relevant data
 
 league_EUW <- read.table(
-  file = "C:\\Users\\Matheus Viana\\Documents\\Blackmagic Design\\Final Project\\games (1).csv",
+  file = "~/Documents/GitHub/FP_MiloSchmitt_MattViana/games.csv",
   header = TRUE,
   sep = ','
 )
 
 league_BR <- read.table(
-  file = "C:\\Users\\Matheus Viana\\Documents\\Blackmagic Design\\Final Project\\full_data_100.csv",
+  file = "~/Documents/GitHub/FP_MiloSchmitt_MattViana/full_data_100.csv",
   header = TRUE,
   sep = ','
 )
@@ -52,7 +52,7 @@ league_BR
 
 ### Abstract:
 
-League of Legends, normally referred to as LoL stands as one of the most popular and competitive multiplayer online battle arena (MOBA) games globally. Its main draw is its fast-paced, and strategic competitive nature. Players aim to win at any cost, a small lead can place you in an advantageous position to take control of the game. As a statistical analyst delving into the data-heavy world of LoL, this project aims to unravel the dynamics and nuances within ranked games to determine the highest indicators of win percentage. 
+League of Legends, normally referred to as LoL, stands as one of the most popular and competitive Multiplayer Online Battle Arena (MOBA) games globally. Its main draw is its fast-paced and strategic competitive nature. Players aim to win at any cost, a small lead can place you in an advantageous position to take control of the game. As a statistical analyst delving into the data-heavy world of LoL, this project aims to unravel the dynamics and nuances within ranked games to determine the highest indicators of win percentage. 
 
 The focus of this analysis was on exploring 116,046 matches between two distinct servers: the Brazilian Server for season 13 containing 64,556 matches and the High Elo tiers (top 1% of players) on the Western European Server in season 9 containing 51,490 matches. Every in-game season brings with it large updates to the game that create variations in strategies and playstyles. Additionally, variations between a large number of seasons have a compounding effect. Moreover, different servers have distinct cultures reflecting their real-world bias. Even though strategies might change, the in-game objectives largely stay the same. The theory behind this analysis comes from the idea that by analyzing the win percentage based on constant objectives through wildly different seasons, servers, and ranks, we can determine universal victory indicators. 
 
@@ -272,7 +272,7 @@ Oddly, the Herald win percentage differences are significant for each team in th
 
 It seems to be that every objective is worth its weight in gold for skilled players, and the coordination and carefulness required for the capture greatly affect its value for lower-ranked players.
 
-```{r first bloor, echo=FALSE, message=FALSE, warning=FALSE}
+```{r first blood, echo=FALSE, message=FALSE, warning=FALSE}
 league_EUW <- league_EUW %>%
   filter(firstBlood != 0)
 
